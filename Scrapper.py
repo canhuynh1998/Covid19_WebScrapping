@@ -10,7 +10,7 @@ statelookup = [
     ('minnesota','usa/minnesota/'), ('missouri','usa/missouri/'), ('massachusetts' ,'usa/massachusetts/'),
     ('alabama','usa/alabama/'), ('virginia','usa/virginia/'), ('colorado','usa/colorado/'), ('louisiana','usa/louisiana/'),
     ('south-carolina','usa/south-carolina/'), ('iowa','usa/iowa/'), ('oklahoma','usa/oklahoma/'),('maryland','usa/maryland/'),
-    ('utah','usa/utah/'), ('kentucky','usa/kentucky/'), ('washington','usa/washington/'),('nevada','usa/nevada/') ('arkansas','usa/arkansas/'),
+    ('utah','usa/utah/'), ('kentucky','usa/kentucky/'), ('washington','usa/washington/'),('nevada','usa/nevada/') ,('arkansas','usa/arkansas/'),
     ('kansas','usa/kansas/'), ('mississippi','usa/mississippi/'), ('connecticut','usa/connecticut/'), ('nebraska','usa/nebraska/') , ('new-mexico','usa/new-mexico/'),
     ('',''),
 ]
@@ -19,8 +19,8 @@ class Scrapper:
     
     def __init__(self):
         
-        self.counties = self.getCounties()
-        self.USA = self.getUSA()
+        #self.counties = self.getCounties()
+        self.USA = self._formatUSA()
         
     
     def scrap(self, isUSA, state=''):
@@ -89,8 +89,10 @@ class Scrapper:
             row = []
             td = head[i].find_all('td') #find all td tags
             for i, th in enumerate(td):
-                if i == 7 :
+                if i == 8 :
                     break
+                if i == 6:
+                    continue
                 value = th.text.replace('\n','').strip() #elimiate all the white space
                 if value == "" or value == 'N/A':
                     value = 0
@@ -108,11 +110,48 @@ class Scrapper:
                         value = float(letter)
                 row.append(value)
             headings.append(tuple(row))
-        print(len(headings))
-        print(headings)
+        # print(len(headings))
+        # print(headings)
         return headings
 
 
+    def _formatUSA(self):
+        '''
+        Reformat the instance list self.USA to have the same format with MongoDB
+        '''
+        results = []
+        for state in self.getUSA():
+            result = {  "_id":None,
+                        "states":None,
+                        "totalCases":None,
+                        "newCases": None,
+                        "totalDeath":None,
+                        "newDeaths":None,
+                        "activeCases":None 
+                        }
+            i = 0
+            while i < len(state):
+                if i == 0:
+                    result['_id'] = int(state[i])
+                elif i == 1:
+                    result['states'] = state[i]
+                elif i == 2:
+                    result['totalCases'] = state[i]
+                elif i == 3:
+                    result["newCases"] = state[i]
+                elif i == 4:
+                    result["totalDeath"] = state[i]
+                elif i == 5:
+                    result["newDeaths"] =state[i]
+                else:
+                    result["activeCases"] = state[i]
+                i += 1
+            results.append(result)
+        # print(len(results))
+        # print(results)
+        return results
+
 scrapper = Scrapper()
+scrapper._formatUSA()
     
     
