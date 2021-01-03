@@ -3,6 +3,8 @@ from bs4 import BeautifulSoup
 
 
 global statelookup
+
+# Using list to direct access using index
 statelookup = [
     ("california","usa/california/"), ("texas" ,"usa/texas/"), ("florida", 'usa/florida/'), ("illinois" ,"usa/illinois/"),
     ("newyork" ,"usa/new-york/"), ("ohio" ,"usa/ohio/"), ("georgia", "usa/georgia/"), ("pennsylvania", "usa/pennsylvania/"),
@@ -25,10 +27,11 @@ class Scrapper:
         self.counties = self.formatCounties()
         #print(self.counties)
         self.states = self.formatStates()
-        print('Everything is ready!!')
         
-    
     def scrap(self, isUSA, state=''):
+        '''
+        Scrap and clean up HTML element of the web page.
+        '''
         URL = 'https://www.worldometers.info/coronavirus/'
         if isUSA:
             URL += 'country/us'
@@ -143,7 +146,7 @@ class Scrapper:
         print('Generating data')
         for state in self.getUSA():
             result = {  "_id":None,
-                        "states":None,
+                        "state":None,
                         "totalCases":None,
                         "newCases": None,
                         "totalDeath":None,
@@ -156,7 +159,7 @@ class Scrapper:
                 if i == 0:
                     result['_id'] = int(state[i])
                 elif i == 1:
-                    result['states'] = state[i]
+                    result['state'] = state[i]
                 elif i == 2:
                     result['totalCases'] = state[i]
                 elif i == 3:
