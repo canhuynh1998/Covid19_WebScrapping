@@ -15,55 +15,79 @@ class Database:
 
     @staticmethod
     def initialize():
+        '''
+        Initialize the Database
+        '''
         cluster = MongoClient(Database.CONNECTION)
         Database.DATABASE = cluster['Covid19']
 
     @staticmethod
     def insert(collection, data):
+        '''
+        Insert 1 document to the collection at a time
+        '''
         Database.DATABASE[collection].insert_one(data)
 
     @staticmethod
     def find_one(collection, data):
+        '''
+        Return the desired document type dictionary
+        '''
         return Database.DATABASE[collection].find_one(data)
     
     @staticmethod
     def update(collection, data):
+        '''
+        Update document to the most recent data
+        '''
+
         def updateHelper(data, key, existing):
+            '''
+            Calculate data that was deleted from the original web page
+            '''
+            if type(data[key]) is str or type(existing[key]) is str:
+                return
             if key == "newCases":
                 return data["totalCases"] - existing["totalCases"]
             else:
                 return data["totalDeath"] - existing["totalDeath"]
                 
         currentCollection = Database.DATABASE[collection]
-        collectionLength = len(list(currentCollection.find()))
+        collectionLength = len(list(currentCollection.find()))  #length of the collection
+
         index = 0
+    
         while index < collectionLength:
             existing = currentCollection.find_one({'_id': index})
             currentValue = data[index]
             for key, value in currentValue.items():
                 if key == "newCases" or key == "newDeaths":
                     value = updateHelper(currentValue, key, existing)
+                if key == "_id" or key == "county" or key == "state":
+                    continue
                 currentCollection.update_one({'_id':index},{"$set":{key:value}})
             index += 1
+        print('Everything is up to date!!')
 
 
 
 
+# Database.initialize()
 
-Database.initialize()
-
-# Insert 
-scrapper = Scrapper()
-# states = scrapper.states
-# #print(states)
-# counties = scrapper.counties
-#print(counties)
+# # # # Insert 
+# scrapper = Scrapper()
+# print(len(scrapper.counties))
+#states = scrapper.states
+# # # #print(states)
+# # # counties = scrapper.counties
+# # #print(counties)
 # Database.DATABASE['Counties'].delete_many({})
 # Database.DATABASE['States'].delete_many({})
-for county in scrapper.counties:
-    print(county)
-    Database.insert('Counties', county)
-for state in scrapper.states:
-    Database.insert('States',state)
-#Database.update('States', states)
-print("--- %s seconds ---" % (time.time() - start_time))
+# for county in scrapper.counties:
+#     print(county)
+#     Database.insert('Counties', county)
+# for state in scrapper.states:
+#     Database.insert('States',state)
+# Database.update('States', scrapper.states)
+# Database.update('Counties', scrapper.counties)
+# print("--- %s seconds ---" % (time.time() - start_time))
