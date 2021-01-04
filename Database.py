@@ -9,8 +9,8 @@ from Scrapper import Scrapper
 import time
 start_time = time.time()
 class Database:
-    
-    CONNECTION = "mongodb+srv://canhuynh:<password>@cluster0.dehxw.mongodb.net/<dbname>?retryWrites=true&w=majority"
+    CONNECTION = "mongodb+srv://canhuynh:can1234@cluster0.dehxw.mongodb.net/Covid19?retryWrites=true&w=majority"
+    #CONNECTION = "mongodb+srv://canhuynh:<password>@cluster0.dehxw.mongodb.net/<dbname>?retryWrites=true&w=majority"
     DATABASE = None
 
     @staticmethod
@@ -67,7 +67,6 @@ class Database:
                     continue
                 currentCollection.update_one({'_id':index},{"$set":{key:value}})
             index += 1
-        print('Everything is up to date!!')
 
 
 
