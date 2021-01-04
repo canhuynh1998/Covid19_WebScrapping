@@ -25,7 +25,6 @@ class Scrapper:
     
     def __init__(self):
         self.counties = self.formatCounties()
-        #print(self.counties)
         self.states = self.formatStates()
         
     def scrap(self, isUSA, state=''):
