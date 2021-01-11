@@ -1,11 +1,13 @@
-import requests
+import requests, threading
 from bs4 import BeautifulSoup
+import time
+start_time = time.time()
+import concurrent.futures
 
 
-global statelookup
-
-# Using list to direct access using index
-statelookup = [
+class Scrapper:
+    
+    statelookup = [
     ("california","usa/california/"), ("texas" ,"usa/texas/"), ("florida", 'usa/florida/'), ("illinois" ,"usa/illinois/"),
     ("newyork" ,"usa/new-york/"), ("ohio" ,"usa/ohio/"), ("georgia", "usa/georgia/"), ("pennsylvania", "usa/pennsylvania/"),
     ("tennessee", "usa/tennessee/"), ("michigan", "usa/michigan/"), ("northcarolina" ,"usa/north-carolina/") ,("indiana" ,"usa/indiana/"),
@@ -21,11 +23,15 @@ statelookup = [
     ('vermont','usa/vermont/')
 ]
 
-class Scrapper:
-    
     def __init__(self):
         self.counties = self.formatCounties()
         self.states = self.formatStates()
+        #self.state = self.testThread()
+        #self.state = self.getCounties()
+        #self.state = self.getCounties1()
+        print("--- %s seconds ---" % (time.time() - start_time))
+        #print(self.state)
+        
         
     def scrap(self, isUSA, state=''):
         '''
@@ -45,8 +51,66 @@ class Scrapper:
             return []
         head = table.tbody.find_all("tr")
         return head
-    
 
+    
+    def getCounties1(self, stateURL):
+        '''
+        UPDATED with threading.
+        Scrapping data publicly available for all counties of USA
+        Traverse through the statelookup global list to access URL for each state.
+        Return a list of tuple as tuple will protect data from accidentally modifying 
+        Each tuple contains important data for each state.
+        (Name, Total Cases, New Cases, Total Death, New Death, Active Case )
+        '''
+        headings = []
+        states = 0
+        county = stateURL[1]
+        head = self.scrap(False, county)
+        if head is None:
+            return 
+        state = stateURL[0]
+        if '-' in state:
+            state = state.replace('-',' ')
+        state = state.title()
+        states += 1
+        for i in range(1,len(head)):
+            row = []
+            td = head[i].find_all('td')
+            #print(td[0].text.replace('\n','').strip())
+            for i, th in enumerate(td):
+                if i == 6:
+                    break
+                value = th.text.replace('\n','').strip()
+                if value == '' or value == 'N/A':
+                    value = 0   #Default Value
+                
+                #This block is to convert all numeric data from String into integer
+                if i != 0 and type(value) is str:
+                    letter = ''
+                    for char in value:
+                        '''
+                        strip the ',' from the number
+                        '''
+                        if char ==',':
+                            continue
+                        letter += char
+                        letter = letter.strip()
+                    value = float(letter)
+                row.append(value)
+            row.append(state)
+            headings.append(tuple(row))
+        return headings
+    
+    
+    def getCountiesFaster(self):
+        '''
+        Apply multithreading technique to increase the scrapping time
+        '''
+        with concurrent.futures.ThreadPoolExecutor() as executor:
+            results = list(executor.map(self.getCounties1, Scrapper.statelookup))
+        results = [j for sub in results for j in sub]   # flatten the 2d list
+        
+        return results
     def getCounties(self):
         '''
         Scrapping data publicly available for all counties of USA
@@ -58,10 +122,10 @@ class Scrapper:
         headings = []
         print('Generating data')
         states = 0
-        for idx in range(len(statelookup)):
-            county = statelookup[idx][1]
+        for idx in range(len(Scrapper.statelookup)):
+            county = Scrapper.statelookup[idx][1]
             head = self.scrap(False, county)
-            state = statelookup[idx][0]
+            state = Scrapper.statelookup[idx][0]
             if '-' in state:
                 state = state.replace('-',' ')
             state = state.title()
@@ -132,6 +196,7 @@ class Scrapper:
                         value = float(letter)
                 row.append(value)
             headings.append(tuple(row)) 
+        print(headings)
         return headings
 
 
@@ -182,7 +247,8 @@ class Scrapper:
         '''
         results = []
         print('Loading')
-        for index, state in enumerate(self.getCounties()):
+        #for index, state in enumerate(self.getCounties()):
+        for index, state in enumerate(self.getCountiesFaster()):
             result = {  "_id":index,
                         "county":None,
                         "state" : None,
@@ -215,6 +281,6 @@ class Scrapper:
         return results
 
 #scrapper = Scrapper()
-#print(len(statelookup))
-#print("--- %s seconds ---" % (time.time() - start_time))
+# print(len(Scrapper.statelookup))
+print("--- %s seconds ---" % (time.time() - start_time))
     
